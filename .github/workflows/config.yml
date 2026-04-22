@@ -28,17 +28,28 @@ jobs:
         run: docker compose run --rm regression
         continue-on-error: true
 
-      - name: Copy allure results from container run
+      - name: Check allure results
         if: always()
         run: |
-          mkdir -p allure-results
+          echo "Project root:"
+          pwd
           ls -la
+          echo "Allure results:"
+          ls -la allure-results || true
+          find allure-results -maxdepth 1 -type f || true
 
       - name: Generate Allure report
         if: always()
         run: |
           docker compose run --rm regression \
             /bin/sh -c "allure generate allure-results -o allure-report --clean"
+
+      - name: Upload Allure raw results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results
+          path: allure-results
 
       - name: Upload Allure report artifact
         if: always()
