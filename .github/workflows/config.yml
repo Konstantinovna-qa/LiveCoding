@@ -36,8 +36,12 @@ jobs:
         run: docker compose build
 
       - name: Run tests
-        run: docker compose run --rm regression
-        continue-on-error: true
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/usr/workspace \
+            -w /usr/workspace \
+            regression \
+            pytest -sv --alluredir=allure-results
 
       - name: Show allure results
         if: always()
@@ -92,6 +96,11 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./allure-report
+
+      - name: Debug allure files
+        run: |
+          echo "FILES:"
+          find allure-results -type f | head -20
 
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
