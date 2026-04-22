@@ -65,9 +65,10 @@ jobs:
       - name: Install Allure CLI
         if: always()
         run: |
-          curl -L -o allure.tgz https://repo.maven.apache.org/maven2/io/qameta/allure/allure-commandline/2.13.8/allure-commandline-2.13.8.tgz
+          curl -L -o allure.tgz https://repo.maven.apache.org/maven2/io/qameta/allure/allure-commandline/2.39.0/allure-commandline-2.39.0.tgz
           tar -xzf allure.tgz
-          sudo mv allure-2.13.8 /opt/allure
+          sudo rm -rf /opt/allure
+          sudo mv allure-2.39.0 /opt/allure
           sudo ln -sf /opt/allure/bin/allure /usr/local/bin/allure
           allure --version
 
@@ -75,8 +76,6 @@ jobs:
         if: always()
         run: |
           allure generate ./allure-results --clean -o ./allure-report
-          echo "allure-report:"
-          find allure-report -maxdepth 2 -type f | sort | head -100
           echo "summary widget:"
           cat allure-report/widgets/summary.json || true
 
@@ -92,34 +91,6 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./allure-report
-
-      - name: Debug allure files
-        if: always()
-        run: |
-          echo "ROOT:"
-          pwd
-          ls -la
-          echo "WORKSPACE allure-results:"
-          ls -la allure-results || true
-          find allure-results -maxdepth 2 -type f | sort || true
-          echo "DOCKER IMAGES:"
-          docker images
-      - name: Debug container workspace
-        if: always()
-        run: |
-          docker compose run --rm regression sh -c "
-          echo 'IN CONTAINER:';
-          pwd;
-          ls -la;
-          echo 'ALLURE RESULTS IN CONTAINER:';
-          ls -la allure-results || true;
-          find allure-results -maxdepth 2 -type f | sort || true
-          " 
-
-      - name: Show docker images
-        run: docker images
-      
-      
 
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
