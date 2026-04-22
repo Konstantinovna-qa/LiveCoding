@@ -38,11 +38,21 @@ jobs:
           ls -la allure-results || true
           find allure-results -maxdepth 1 -type f || true
 
+      -  name: Install Allure
+         if: always()
+         run: |
+            sudo apt-get update
+            sudo apt-get install -y default-jre
+            wget https://repo.maven.apache.org/maven2/io/qameta/allure/allure-commandline/2.13.8/allure-commandline-2.13.8.tgz
+            tar -zxvf allure-commandline-2.13.8.tgz
+            sudo mv allure-2.13.8 /opt/allure
+            sudo ln -s /opt/allure/bin/allure /usr/bin/allure
+
       - name: Generate Allure report
         if: always()
         run: |
-          docker compose run --rm regression \
-            /bin/sh -c "allure generate allure-results -o allure-report --clean"
+         allure generate allure-results -o allure-report --clean
+        
 
       - name: Upload Allure raw results
         if: always()
