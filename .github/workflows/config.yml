@@ -78,7 +78,7 @@ jobs:
           echo "allure-report:"
           find allure-report -maxdepth 2 -type f | sort | head -100
           echo "summary widget:"
-          cat allure-report/widgets/summary.json
+          cat allure-report/widgets/summary.json || true
 
       - name: Upload generated Allure report
         if: always()
@@ -93,6 +93,17 @@ jobs:
         with:
           path: ./allure-report
 
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: test
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+    steps:
       - name: Deploy to GitHub Pages
-        if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        id: deployment
         uses: actions/deploy-pages@v4

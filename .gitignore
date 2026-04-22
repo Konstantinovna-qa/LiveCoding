@@ -2,5 +2,5 @@
     .idea
     *.iml
     .env
-    report
-    allure-results
+    allure-results/
+    allure-report/
