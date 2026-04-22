@@ -20,7 +20,7 @@ jobs:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
-      - name: Checkout
+      - name: Checkout current branch
         uses: actions/checkout@v4
 
       - name: Configure Pages
@@ -29,8 +29,27 @@ jobs:
 
       - name: Clean old allure artifacts
         run: |
-          rm -rf allure-results allure-report
+          rm -rf allure-results allure-report old-pages
           mkdir -p allure-results
+
+      - name: Checkout gh-pages for history
+        if: always()
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: old-pages
+        continue-on-error: true
+
+      - name: Restore Allure history
+        if: always()
+        run: |
+          mkdir -p allure-results/history
+          if [ -d old-pages/history ]; then
+            cp -R old-pages/history/. allure-results/history/
+            echo "History restored from gh-pages"
+          else
+            echo "No previous history found"
+          fi
 
       - name: Build container
         run: docker compose build
@@ -42,11 +61,9 @@ jobs:
       - name: Show allure results
         if: always()
         run: |
-          echo "PWD=$(pwd)"
-          ls -la
           echo "allure-results:"
           ls -la allure-results || true
-          find allure-results -maxdepth 1 -type f | sort || true
+          find allure-results -maxdepth 2 -type f | sort || true
 
       - name: Upload raw allure results
         if: always()
@@ -76,8 +93,10 @@ jobs:
         if: always()
         run: |
           allure generate ./allure-results --clean -o ./allure-report
-          echo "summary widget:"
+          echo "summary:"
           cat allure-report/widgets/summary.json || true
+          echo "history:"
+          ls -la allure-report/history || true
 
       - name: Upload generated Allure report
         if: always()
